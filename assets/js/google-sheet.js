@@ -1,0 +1,48 @@
+// Google Sheet submission module
+// ส่วนนี้แยกไว้สำหรับยิงข้อมูลไป Google Sheet เท่านั้น
+// หน้าเว็บไม่แสดง emoji แต่ข้อมูลที่ส่งขึ้น Google Sheets ยังแนบ emoji ได้
+
+
+function getGoogleSheetResult(percent) {
+  const resultText = interpretResult(percent);
+  if (percent <= 40) return `${resultText} 🩺`;
+  if (percent <= 70) return `${resultText} ⚖️`;
+  return `${resultText} ✅`;
+}
+
+function saveToGoogleSheet() {
+  const payload = {
+    nickname: nickname,
+    email: email,
+    // status: selectedAnswers[0] || "",
+    q_no_score: selectedAnswers[1] || "",
+    language: lang,
+    app_version: APP_INFO.version,
+    answers: selectedAnswers,
+    sum_score: totalScore,
+    percent: calculatePercent().toFixed(1),
+    result: getGoogleSheetResult(calculatePercent())
+  };
+
+  fetch(GOOGLE_SHEET_CONFIG.endpoint, {
+    method: "POST",
+    mode: "no-cors",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  })
+  .then(() => {
+    console.log("Data sent to Google Sheets");
+    showAlert("success", lang === "th" ? "บันทึกข้อมูลเรียบร้อยแล้ว" : "Data saved successfully");
+    
+    const reloadBtn = document.createElement("button");
+    reloadBtn.id = "reloadBtn";
+    reloadBtn.className = "btn btn-outline-light mt-3";
+    reloadBtn.textContent = lang === "th" ? "ทำแบบสอบถามอีกครั้ง" : "Fill Again";
+    reloadBtn.addEventListener("click", () => window.location.reload());
+    container.appendChild(reloadBtn);
+  })
+  .catch(error => {
+    console.error("Error sending data:", error);
+    showAlert("danger", lang === "th" ? "ไม่สามารถเชื่อมต่อกับ Google Sheet ได้" : "Failed to connect to Google Sheet");
+  });
+}
