@@ -11,6 +11,7 @@ function getGoogleSheetResult(percent) {
 }
 
 function saveToGoogleSheet() {
+  showSavingStatus();
   const payload = {
     nickname: nickname,
     email: email,
@@ -31,6 +32,8 @@ function saveToGoogleSheet() {
     body: JSON.stringify(payload)
   })
   .then(() => {
+    hideSavingStatus();
+    setButtonLoading(nextBtn, false);
     console.log("Data sent to Google Sheets");
     showAlert("success", getI18n().dataSaved);
     
@@ -42,6 +45,8 @@ function saveToGoogleSheet() {
     container.appendChild(reloadBtn);
   })
   .catch(error => {
+    hideSavingStatus();
+    setButtonLoading(nextBtn, false);
     console.error("Error sending data:", error);
     showAlert("danger", getI18n().sheetFailed);
   });

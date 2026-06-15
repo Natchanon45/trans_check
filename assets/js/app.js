@@ -294,7 +294,8 @@ const APP_I18N = {
     close: "ปิด",
     dataSaved: "บันทึกข้อมูลเรียบร้อยแล้ว",
     sheetFailed: "ไม่สามารถเชื่อมต่อกับ Google Sheet ได้",
-    fillAgain: "ทำแบบสอบถามอีกครั้ง"
+    fillAgain: "ทำแบบสอบถามอีกครั้ง",
+    savingData: "กำลังส่งข้อมูล"
   },
   en: {
     appName: APP_INFO.appNameEn || "Hormone Assessment",
@@ -326,7 +327,8 @@ const APP_I18N = {
     close: "Close",
     dataSaved: "Data saved successfully",
     sheetFailed: "Failed to connect to Google Sheet",
-    fillAgain: "Fill Again"
+    fillAgain: "Fill Again",
+    savingData: "Sending data"
   }
 };
 
@@ -584,12 +586,50 @@ function recalcScore() {
   });
 }
 
+function setButtonLoading(button, isLoading, loadingText) {
+  if (!button) return;
+  if (isLoading) {
+    if (!button.dataset.originalHtml) button.dataset.originalHtml = button.innerHTML;
+    button.disabled = true;
+    button.classList.add("is-loading");
+    button.innerHTML = `<span class="spinner-border spinner-border-sm" aria-hidden="true"></span><span>${loadingText}</span>`;
+  } else {
+    if (button.dataset.originalHtml) {
+      button.innerHTML = button.dataset.originalHtml;
+      delete button.dataset.originalHtml;
+    }
+    button.classList.remove("is-loading");
+  }
+}
+
+function showSavingStatus() {
+  const existing = document.getElementById("savingStatus");
+  if (existing) return existing;
+  const status = document.createElement("div");
+  status.id = "savingStatus";
+  status.className = "saving-status";
+  status.setAttribute("role", "status");
+  status.setAttribute("aria-live", "polite");
+  status.innerHTML = `
+    <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+    <span>${getI18n().savingData}</span>
+  `;
+  container.appendChild(status);
+  return status;
+}
+
+function hideSavingStatus() {
+  const status = document.getElementById("savingStatus");
+  if (status) status.remove();
+}
+
 nextBtn.addEventListener("click", ()=>{
-  if(selectedAnswerIndexes[current]==null) return;
+  if(selectedAnswerIndexes[current]==null || nextBtn.classList.contains("is-loading")) return;
   current++;
   if (current < questions[lang].length) {
     showQuestion();
   } else {
+    setButtonLoading(nextBtn, true, getI18n().savingData);
     showResult(true);
   }
 });
