@@ -242,7 +242,7 @@ const scoredQuestions = Array.from({length: questions[lang].length}, (_, i) => i
 const versions = document.getElementById("version");
 
 const installAppBtn = document.getElementById("installAppBtn");
-const themeButtons = document.querySelectorAll("[data-theme-option]");
+const themeModeToggle = document.getElementById("themeModeToggle");
 const systemThemeQuery = window.matchMedia("(prefers-color-scheme: dark)");
 let deferredInstallPrompt = null;
 
@@ -259,34 +259,57 @@ function applyTheme(mode = getSavedThemeMode()) {
   const effectiveTheme = getEffectiveTheme(mode);
   document.documentElement.setAttribute("data-bs-theme", effectiveTheme);
   document.querySelector('meta[name="theme-color"]')?.setAttribute("content", effectiveTheme === "dark" ? "#020617" : "#f8fafc");
-  themeButtons.forEach((button) => button.classList.toggle("active", button.dataset.themeOption === mode));
+  renderThemeToggle(mode, effectiveTheme);
 }
 
 function renderFooter() {
   const versionEl = document.getElementById("version");
   if (!versionEl) return;
-  const versionText = lang === "th" ? "เวอร์ชั่น" : "Version";
+  const versionText = lang === "th" ? "Version" : "Version";
   const developedText = lang === "th" ? "พัฒนาโดย" : "Developed by";
-  versionEl.innerHTML = `${versionText} ${APP_INFO.version} • ${developedText} ${APP_INFO.author} • &copy; ${APP_INFO.copyrightYear}`;
+  const rightsText = lang === "th" ? "สงวนลิขสิทธิ์" : "All Rights Reserved";
+  versionEl.innerHTML = `${versionText} ${APP_INFO.version} • ${developedText} ${APP_INFO.author}<br>&copy; ${APP_INFO.copyrightYear} ${rightsText}`;
+}
+
+function renderActionBarText() {
+  const appNameEl = document.getElementById("appName");
+  const appSubtitleEl = document.getElementById("appSubtitle");
+  if (appNameEl) appNameEl.textContent = APP_INFO.shortName || "Hormone Form";
+  if (appSubtitleEl) appSubtitleEl.textContent = lang === "th" ? "แบบสอบถามสุขภาพ" : "Health questionnaire";
+}
+
+function renderThemeToggle(mode = getSavedThemeMode(), effectiveTheme = getEffectiveTheme(mode)) {
+  if (!themeModeToggle) return;
+  const data = {
+    system: { icon: "bi-circle-half", th: "ตามระบบ", en: "System" },
+    light: { icon: "bi-sun", th: "กลางวัน", en: "Light" },
+    dark: { icon: "bi-moon-stars", th: "กลางคืน", en: "Dark" }
+  }[mode] || { icon: effectiveTheme === "dark" ? "bi-moon-stars" : "bi-sun", th: "โหมดสี", en: "Theme" };
+  themeModeToggle.innerHTML = `<i class="bi ${data.icon}"></i>`;
+  themeModeToggle.title = lang === "th" ? `โหมด${data.th}` : `${data.en} mode`;
+  themeModeToggle.setAttribute("aria-label", themeModeToggle.title);
 }
 
 function iconText(icon, text) {
   return `<i class="bi ${icon}"></i> ${text}`;
 }
 
-themeButtons.forEach((button) => {
-  button.addEventListener("click", () => {
-    const mode = button.dataset.themeOption;
-    localStorage.setItem("appThemeMode", mode);
-    applyTheme(mode);
+if (themeModeToggle) {
+  themeModeToggle.addEventListener("click", () => {
+    const modes = ["system", "light", "dark"];
+    const currentMode = getSavedThemeMode();
+    const nextMode = modes[(modes.indexOf(currentMode) + 1) % modes.length] || "system";
+    localStorage.setItem("appThemeMode", nextMode);
+    applyTheme(nextMode);
   });
-});
+}
 
 systemThemeQuery.addEventListener("change", () => {
   if (getSavedThemeMode() === "system") applyTheme("system");
 });
 
 applyTheme();
+renderActionBarText();
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
@@ -317,6 +340,8 @@ langBtn.addEventListener("click", () => {
   lang = lang === "th" ? "en" : "th";
   langBtn.innerHTML = lang === "th" ? iconText("bi-translate", "EN") : iconText("bi-translate", "TH");
   updateLanguageUI();
+  renderActionBarText();
+  renderThemeToggle(getSavedThemeMode(), getEffectiveTheme(getSavedThemeMode()));
 });
 
 function updateLanguageUI() {
@@ -325,6 +350,7 @@ function updateLanguageUI() {
     document.getElementById("formTitle1").textContent = "ความเปลี่ยนแปลงหลังรับฮอร์โมน";
     document.getElementById("nicknameLabel").textContent = "ชื่อเล่น";
     document.getElementById("emailLabel").textContent = "อีเมล";
+    renderActionBarText();
     startBtn.innerHTML = iconText("bi-play-circle", "เริ่มทำแบบสอบถาม");
     nextBtn.innerHTML = iconText("bi-arrow-right-circle", "ถัดไป");
     document.getElementById("nickname").placeholder = "กรอกชื่อเล่น";
@@ -335,6 +361,7 @@ function updateLanguageUI() {
     document.getElementById("formTitle1").textContent = "Changes after taking hormones";
     document.getElementById("nicknameLabel").textContent = "Nickname";
     document.getElementById("emailLabel").textContent = "Email";
+    renderActionBarText();
     startBtn.innerHTML = iconText("bi-play-circle", "Start Questionnaire");
     nextBtn.innerHTML = iconText("bi-arrow-right-circle", "Next");
     document.getElementById("nickname").placeholder = "Enter nickname";
@@ -346,6 +373,8 @@ function updateLanguageUI() {
 
 document.addEventListener("DOMContentLoaded", function() {
   updateLanguageUI();
+  renderActionBarText();
+  renderThemeToggle(getSavedThemeMode(), getEffectiveTheme(getSavedThemeMode()));
 });
 
 startBtn.addEventListener("click", () => {

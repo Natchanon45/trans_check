@@ -1,7 +1,7 @@
 // App configuration
 // แก้เวอร์ชันและ URL Google Apps Script ได้จากไฟล์นี้
 const APP_INFO = {
-  version: "1.8.0",
+  version: "1.9.0",
   author: "นายณัฐชนน ศรีเปล่ง",
   copyrightYear: "2026",
   name: "Hormone Questionnaire Interactive",
