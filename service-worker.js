@@ -1,4 +1,4 @@
-const CACHE_NAME = "hormone-questionnaire-actionbar-v1.9.2";
+const CACHE_NAME = "hormone-questionnaire-actionbar-v1.9.4";
 const APP_SHELL = [
   "./",
   "./index.html",

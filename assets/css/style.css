@@ -360,10 +360,6 @@ body::before {
   line-height: 1.35;
 }
 
-.toast.app-toast .btn-close {
-  filter: invert(1) grayscale(100%);
-  opacity: .75;
-}
 
 .toast.app-toast.toast-error { border-left-color: #22c55e; }
 .toast.app-toast.toast-success { border-left-color: #22c55e; }

@@ -32,17 +32,17 @@ function saveToGoogleSheet() {
   })
   .then(() => {
     console.log("Data sent to Google Sheets");
-    showAlert("success", lang === "th" ? "บันทึกข้อมูลเรียบร้อยแล้ว" : "Data saved successfully");
+    showAlert("success", getI18n().dataSaved);
     
     const reloadBtn = document.createElement("button");
     reloadBtn.id = "reloadBtn";
     reloadBtn.className = "btn btn-outline-light mt-3";
-    reloadBtn.textContent = lang === "th" ? "ทำแบบสอบถามอีกครั้ง" : "Fill Again";
+    reloadBtn.textContent = getI18n().fillAgain;
     reloadBtn.addEventListener("click", () => window.location.reload());
     container.appendChild(reloadBtn);
   })
   .catch(error => {
     console.error("Error sending data:", error);
-    showAlert("danger", lang === "th" ? "ไม่สามารถเชื่อมต่อกับ Google Sheet ได้" : "Failed to connect to Google Sheet");
+    showAlert("danger", getI18n().sheetFailed);
   });
 }

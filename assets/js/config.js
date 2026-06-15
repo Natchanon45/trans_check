@@ -1,7 +1,7 @@
 // App configuration
 // แก้เวอร์ชันและ URL Google Apps Script ได้จากไฟล์นี้
 const APP_INFO = {
-  version: "1.9.2",
+  version: "1.9.4",
   authorTh: "นายณัฐชนน ศรีเปล่ง",
   authorEn: "Mr. Natchanon Sripleng",
   copyrightYear: "2026",

@@ -230,6 +230,7 @@ let current = 0;
 let totalScore = 0;
 let nickname = "", email = "";
 let selectedAnswers = [];
+let selectedAnswerIndexes = [];
 
 const container = document.getElementById("questionContainer");
 const nextBtn = document.getElementById("nextBtn");
@@ -268,14 +269,64 @@ const APP_I18N = {
     appSubtitle: "แบบสอบถามสุขภาพ",
     developedBy: "พัฒนาโดย",
     developer: APP_INFO.authorTh,
-    copyright: `© ${APP_INFO.copyrightYear} สงวนลิขสิทธิ์`
+    copyright: `© ${APP_INFO.copyrightYear} สงวนลิขสิทธิ์`,
+    formTitle: "แบบสอบถาม",
+    formTitle1: "ความเปลี่ยนแปลงหลังรับฮอร์โมน",
+    nicknameLabel: "ชื่อเล่น",
+    nicknamePlaceholder: "กรอกชื่อเล่น",
+    emailLabel: "อีเมล",
+    emailPlaceholder: "กรอกอีเมล",
+    installApp: "ติดตั้งแอป",
+    start: "เริ่มทำแบบสอบถาม",
+    next: "ถัดไป",
+    previous: "ย้อนกลับ",
+    nicknameRequired: "กรุณากรอกชื่อเล่น",
+    emailRequired: "กรุณากรอกอีเมล",
+    emailInvalid: "รูปแบบอีเมลไม่ถูกต้อง",
+    resultTitle: "สรุปผลของคุณ",
+    nickname: "ชื่อเล่น",
+    email: "อีเมล",
+    totalScore: "คะแนนรวมของคุณคือ",
+    percentText: "คิดเป็น",
+    resultLow: "ผลลัพธ์: ควรปรึกษาแพทย์เพิ่มเติม",
+    resultMedium: "ผลลัพธ์: มีการเปลี่ยนแปลงปานกลาง",
+    resultHigh: "ผลลัพธ์: ปรับตัวดีมาก",
+    close: "ปิด",
+    dataSaved: "บันทึกข้อมูลเรียบร้อยแล้ว",
+    sheetFailed: "ไม่สามารถเชื่อมต่อกับ Google Sheet ได้",
+    fillAgain: "ทำแบบสอบถามอีกครั้ง"
   },
   en: {
     appName: APP_INFO.appNameEn || "Hormone Assessment",
     appSubtitle: "Health questionnaire",
     developedBy: "Developed by",
     developer: APP_INFO.authorEn,
-    copyright: `© ${APP_INFO.copyrightYear} All Rights Reserved`
+    copyright: `© ${APP_INFO.copyrightYear} All Rights Reserved`,
+    formTitle: "Questionnaire",
+    formTitle1: "Changes after taking hormones",
+    nicknameLabel: "Nickname",
+    nicknamePlaceholder: "Enter nickname",
+    emailLabel: "Email",
+    emailPlaceholder: "Enter email",
+    installApp: "Install App",
+    start: "Start Questionnaire",
+    next: "Next",
+    previous: "Previous",
+    nicknameRequired: "Please enter your nickname",
+    emailRequired: "Please enter your email",
+    emailInvalid: "Invalid email format",
+    resultTitle: "Your Result",
+    nickname: "Nickname",
+    email: "Email",
+    totalScore: "Your total score is",
+    percentText: "Equivalent to",
+    resultLow: "Result: Consider consulting a specialist",
+    resultMedium: "Result: Moderate changes",
+    resultHigh: "Result: Excellent adaptation",
+    close: "Close",
+    dataSaved: "Data saved successfully",
+    sheetFailed: "Failed to connect to Google Sheet",
+    fillAgain: "Fill Again"
   }
 };
 
@@ -288,12 +339,10 @@ function renderFooter() {
   if (!versionEl) return;
   const text = getI18n();
   versionEl.innerHTML = `
-    <div class="footer-version">Version ${APP_INFO.version}</div>
     <div class="footer-developer">
-      <div>${text.developedBy}</div>
-      <strong>${text.developer}</strong>
+      <strong>${text.developedBy} • ${text.developer} • ${text.copyright}</strong>
     </div>
-    <div class="footer-copyright">${text.copyright}</div>
+    <div class="footer-version">Version ${APP_INFO.version}</div>
   `;
 }
 
@@ -377,68 +426,99 @@ langBtn.addEventListener("click", () => {
   lang = lang === "th" ? "en" : "th";
   localStorage.setItem("appLang", lang);
   document.documentElement.lang = lang;
-  renderLanguageToggle();
-  updateLanguageUI();
-  renderActionBarText();
-  renderFooter();
-  renderThemeToggle(getSavedThemeMode(), getEffectiveTheme(getSavedThemeMode()));
-  renderLanguageToggle();
+  syncSelectedAnswersForLanguage();
+  updateLanguageUI({ rerender: true });
 });
 
-function updateLanguageUI() {
+function syncSelectedAnswersForLanguage() {
+  selectedAnswerIndexes.forEach((answerIndex, questionIndex) => {
+    if (answerIndex == null) return;
+    const question = questions[lang]?.[questionIndex];
+    if (!question) return;
+    selectedAnswers[questionIndex] = scoredQuestions[questionIndex]
+      ? 3 - answerIndex
+      : question.answers[answerIndex];
+  });
+}
+
+function updateLanguageUI(options = {}) {
+  const text = getI18n();
+  renderActionBarText();
   renderFooter();
-  if(lang === "th") {
-    document.getElementById("formTitle").textContent = "แบบสอบถาม";
-    document.getElementById("formTitle1").textContent = "ความเปลี่ยนแปลงหลังรับฮอร์โมน";
-    document.getElementById("nicknameLabel").textContent = "ชื่อเล่น";
-    document.getElementById("emailLabel").textContent = "อีเมล";
-    renderActionBarText();
-    startBtn.innerHTML = iconText("bi-play-circle", "เริ่มทำแบบสอบถาม");
-    nextBtn.innerHTML = iconText("bi-arrow-right-circle", "ถัดไป");
-    document.getElementById("nickname").placeholder = "กรอกชื่อเล่น";
-    document.getElementById("email").placeholder = "กรอกอีเมล";
-    prevBtn.innerHTML = iconText("bi-arrow-left-circle", "ย้อนกลับ");
-  } else {
-    document.getElementById("formTitle").textContent = "Questionnaire";
-    document.getElementById("formTitle1").textContent = "Changes after taking hormones";
-    document.getElementById("nicknameLabel").textContent = "Nickname";
-    document.getElementById("emailLabel").textContent = "Email";
-    renderActionBarText();
-    startBtn.innerHTML = iconText("bi-play-circle", "Start Questionnaire");
-    nextBtn.innerHTML = iconText("bi-arrow-right-circle", "Next");
-    document.getElementById("nickname").placeholder = "Enter nickname";
-    document.getElementById("email").placeholder = "Enter email";
-    prevBtn.innerHTML = iconText("bi-arrow-left-circle", "Previous");
+  renderLanguageToggle();
+  renderThemeToggle(getSavedThemeMode(), getEffectiveTheme(getSavedThemeMode()));
+
+  const setText = (id, value) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+  };
+  const setPlaceholder = (id, value) => {
+    const el = document.getElementById(id);
+    if (el) el.placeholder = value;
+  };
+
+  setText("formTitle", text.formTitle);
+  setText("formTitle1", text.formTitle1);
+  setText("nicknameLabel", text.nicknameLabel);
+  setText("emailLabel", text.emailLabel);
+  setPlaceholder("nickname", text.nicknamePlaceholder);
+  setPlaceholder("email", text.emailPlaceholder);
+
+  if (installAppBtn) installAppBtn.innerHTML = iconText("bi-phone", text.installApp);
+  if (startBtn) startBtn.innerHTML = iconText("bi-play-circle", text.start);
+  if (nextBtn) nextBtn.innerHTML = iconText("bi-arrow-right-circle", text.next);
+  if (prevBtn) prevBtn.innerHTML = iconText("bi-arrow-left-circle", text.previous);
+
+  const nicknameError = document.getElementById("nicknameError");
+  const emailError = document.getElementById("emailError");
+  if (nicknameError && nicknameError.style.display !== "none") nicknameError.textContent = text.nicknameRequired;
+  if (emailError && emailError.style.display !== "none") {
+    const emailValue = document.getElementById("email")?.value.trim() || "";
+    emailError.textContent = emailValue ? text.emailInvalid : text.emailRequired;
   }
-  renderFooter();
+
+  if (options.rerender !== false) rerenderCurrentScreen();
+}
+
+function getCurrentScreen() {
+  const introForm = document.getElementById("introForm");
+  if (introForm && introForm.style.display !== "none") return "intro";
+  if (current >= questions[lang].length || (nextBtn && nextBtn.style.display === "none" && progressBar && progressBar.style.width === "100%")) return "result";
+  return "question";
+}
+
+function rerenderCurrentScreen() {
+  const screen = getCurrentScreen();
+  if (screen === "question") showQuestion();
+  if (screen === "result") showResult(false);
 }
 
 document.addEventListener("DOMContentLoaded", function() {
-  updateLanguageUI();
-  renderActionBarText();
-  renderFooter();
-  renderThemeToggle(getSavedThemeMode(), getEffectiveTheme(getSavedThemeMode()));
-  renderLanguageToggle();
+  updateLanguageUI({ rerender: false });
 });
 
 startBtn.addEventListener("click", () => {
-  nickname = document.getElementById("nickname").value.trim();
-  email = document.getElementById("email").value.trim();
+  const nicknameInput = document.getElementById("nickname");
+  const emailInput = document.getElementById("email");
+  const nicknameError = document.getElementById("nicknameError");
+  const emailError = document.getElementById("emailError");
+  nickname = nicknameInput.value.trim();
+  email = emailInput.value.trim();
   let valid = true;
-  document.getElementById("nicknameError").style.display = "none";
-  document.getElementById("emailError").style.display = "none";
+  nicknameError.style.display = "none";
+  emailError.style.display = "none";
   if (!nickname) {
-    nicknameError.textContent = (lang === "th") ? "กรุณากรอกชื่อเล่น" : "Please enter your nickname";
+    nicknameError.textContent = getI18n().nicknameRequired;
     nicknameError.style.display = "block";
     valid = false;
   }
 
   if (!email) {
-    emailError.textContent = (lang === "th") ? "กรุณากรอกอีเมล" : "Please enter your email";
+    emailError.textContent = getI18n().emailRequired;
     emailError.style.display = "block";
     valid = false;
   } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    emailError.textContent = (lang === "th") ? "รูปแบบอีเมลไม่ถูกต้อง" : "Invalid email format";
+    emailError.textContent = getI18n().emailInvalid;
     emailError.style.display = "block";
     valid = false;
   }
@@ -467,25 +547,26 @@ function showQuestion() {
   container.innerHTML = `
     <div class="category">${q.category || ""} [${current+1}/${questions[lang].length}]</div>
     <div class="question">${q.text}</div>
-    ${q.answers.map((a,i)=>`<button class="answer-btn" data-score="${3 - i}">${a}</button>`).join("")}
+    ${q.answers.map((a,i)=>`<button class="answer-btn" data-index="${i}" data-score="${3 - i}">${a}</button>`).join("")}
 
   `;
 
   prevBtn.style.display = current > 0 ? "block" : "none";
 
-  nextBtn.disabled = selectedAnswers[current] == null;
+  nextBtn.disabled = selectedAnswerIndexes[current] == null;
 
   updateProgress();
 
   document.querySelectorAll(".answer-btn").forEach(btn=>{
     btn.classList.remove("selected");
-    if(scoredQuestions[current] && selectedAnswers[current]===parseInt(btn.dataset.score)) btn.classList.add("selected");
-    if(!scoredQuestions[current] && selectedAnswers[current]===btn.textContent) btn.classList.add("selected");
+    if (selectedAnswerIndexes[current] === Number(btn.dataset.index)) btn.classList.add("selected");
 
     btn.addEventListener("click", ()=>{
       document.querySelectorAll(".answer-btn").forEach(b=>b.classList.remove("selected"));
       btn.classList.add("selected");
-      selectedAnswers[current] = scoredQuestions[current] ? parseInt(btn.dataset.score) : btn.textContent;
+      const answerIndex = Number(btn.dataset.index);
+      selectedAnswerIndexes[current] = answerIndex;
+      selectedAnswers[current] = scoredQuestions[current] ? parseInt(btn.dataset.score) : questions[lang][current].answers[answerIndex];
       nextBtn.disabled = false;
       recalcScore();
     });
@@ -504,11 +585,12 @@ function recalcScore() {
 }
 
 nextBtn.addEventListener("click", ()=>{
-  if(selectedAnswers[current]==null) return;
+  if(selectedAnswerIndexes[current]==null) return;
   current++;
-  if(current<questions[lang].length){ showQuestion();
-  }else {showResult();
-        saveToGoogleSheet();
+  if (current < questions[lang].length) {
+    showQuestion();
+  } else {
+    showResult(true);
   }
 });
 
@@ -524,33 +606,33 @@ function calculatePercent() {
   return (totalScore / maxScore) * 100;
 }
 
-function showResult() {
+function showResult(shouldSave = false) {
   const scoredCount = questions[lang].length - 2;
-  const maxScore = scoredCount*3;
+  const maxScore = scoredCount * 3;
   const percent = calculatePercent();
-  const msg = interpretResult(percent);
+  const text = getI18n();
   container.innerHTML = `
-    <h4>${lang==="th"?"สรุปผลของคุณ":"Your Result"}</h4>
-    <p><b>${lang==="th"?"ชื่อเล่น":"Nickname"}:</b> ${nickname}</p>
-    <p><b>${lang==="th"?"อีเมล":"Email"}:</b> ${email}</p>
-    <p>${lang==="th"?"คะแนนรวมของคุณคือ":"Your total score is"} <b>${totalScore}</b> / ${maxScore}</p>
-    <p>${lang==="th"?"คิดเป็น":"Equivalent to"} ${percent.toFixed(1)}%</p>
+    <h4>${text.resultTitle}</h4>
+    <p><b>${text.nickname}:</b> ${nickname}</p>
+    <p><b>${text.email}:</b> ${email}</p>
+    <p>${text.totalScore} <b>${totalScore}</b> / ${maxScore}</p>
+    <p>${text.percentText} ${percent.toFixed(1)}%</p>
     <p>${interpretResult(percent)}</p>
   `;
   nextBtn.style.display = "none";
   prevBtn.style.display = "none";
   progressBar.style.width = "100%";
+  if (shouldSave) {
+    syncSelectedAnswersForLanguage();
+    saveToGoogleSheet();
+  }
 }
 
 function interpretResult(p) {
-  if (lang === "th") {
-    if (p <= 40) return "ผลลัพธ์: ควรปรึกษาแพทย์เพิ่มเติม";
-    if (p <= 70) return "ผลลัพธ์: มีการเปลี่ยนแปลงปานกลาง";
-    return "ผลลัพธ์: ปรับตัวดีมาก";
-  }
-  if (p <= 40) return "Result: Consider consulting a specialist";
-  if (p <= 70) return "Result: Moderate changes";
-  return "Result: Excellent adaptation";
+  const text = getI18n();
+  if (p <= 40) return text.resultLow;
+  if (p <= 70) return text.resultMedium;
+  return text.resultHigh;
 }
 
 
@@ -568,12 +650,12 @@ function showAlert(type, message) {
     <div class="toast-content">
       <span class="toast-icon"><i class="bi ${icon}"></i></span>
       <span class="toast-message">${message}</span>
-      <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
     </div>
   `;
   toastContainer.appendChild(toastEl);
 
-  const toast = new bootstrap.Toast(toastEl, { delay: 3600 });
+  const delay = type === "error" || type === "danger" ? 4200 : (type === "warning" ? 3200 : 2600);
+  const toast = new bootstrap.Toast(toastEl, { autohide: true, delay });
   toast.show();
   toastEl.addEventListener("hidden.bs.toast", () => toastEl.remove());
 }
