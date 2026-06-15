@@ -225,7 +225,7 @@ const questions = {
     }
   ]
 };
-let lang = "th";
+let lang = localStorage.getItem("appLang") || "th";
 let current = 0;
 let totalScore = 0;
 let nickname = "", email = "";
@@ -262,20 +262,47 @@ function applyTheme(mode = getSavedThemeMode()) {
   renderThemeToggle(mode, effectiveTheme);
 }
 
+const APP_I18N = {
+  th: {
+    appName: APP_INFO.appNameTh || "แบบประเมินฮอร์โมน",
+    appSubtitle: "แบบสอบถามสุขภาพ",
+    developedBy: "พัฒนาโดย",
+    developer: APP_INFO.authorTh,
+    copyright: `© ${APP_INFO.copyrightYear} สงวนลิขสิทธิ์`
+  },
+  en: {
+    appName: APP_INFO.appNameEn || "Hormone Assessment",
+    appSubtitle: "Health questionnaire",
+    developedBy: "Developed by",
+    developer: APP_INFO.authorEn,
+    copyright: `© ${APP_INFO.copyrightYear} All Rights Reserved`
+  }
+};
+
+function getI18n() {
+  return APP_I18N[lang] || APP_I18N.th;
+}
+
 function renderFooter() {
   const versionEl = document.getElementById("version");
   if (!versionEl) return;
-  const versionText = lang === "th" ? "Version" : "Version";
-  const developedText = lang === "th" ? "พัฒนาโดย" : "Developed by";
-  const rightsText = lang === "th" ? "สงวนลิขสิทธิ์" : "All Rights Reserved";
-  versionEl.innerHTML = `${versionText} ${APP_INFO.version} • ${developedText} ${APP_INFO.author}<br>&copy; ${APP_INFO.copyrightYear} ${rightsText}`;
+  const text = getI18n();
+  versionEl.innerHTML = `
+    <div class="footer-version">Version ${APP_INFO.version}</div>
+    <div class="footer-developer">
+      <div>${text.developedBy}</div>
+      <strong>${text.developer}</strong>
+    </div>
+    <div class="footer-copyright">${text.copyright}</div>
+  `;
 }
 
 function renderActionBarText() {
   const appNameEl = document.getElementById("appName");
   const appSubtitleEl = document.getElementById("appSubtitle");
-  if (appNameEl) appNameEl.textContent = APP_INFO.shortName || "Hormone Form";
-  if (appSubtitleEl) appSubtitleEl.textContent = lang === "th" ? "แบบสอบถามสุขภาพ" : "Health questionnaire";
+  const text = getI18n();
+  if (appNameEl) appNameEl.textContent = text.appName;
+  if (appSubtitleEl) appSubtitleEl.textContent = text.appSubtitle;
 }
 
 function renderThemeToggle(mode = getSavedThemeMode(), effectiveTheme = getEffectiveTheme(mode)) {
@@ -309,7 +336,10 @@ systemThemeQuery.addEventListener("change", () => {
 });
 
 applyTheme();
+document.documentElement.lang = lang;
 renderActionBarText();
+renderFooter();
+renderLanguageToggle();
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
@@ -336,15 +366,27 @@ window.addEventListener("appinstalled", () => {
   deferredInstallPrompt = null;
 });
 
+function renderLanguageToggle() {
+  if (!langBtn) return;
+  langBtn.innerHTML = `<i class="bi bi-translate"></i>`;
+  langBtn.title = lang === "th" ? "Switch to English" : "เปลี่ยนเป็นภาษาไทย";
+  langBtn.setAttribute("aria-label", langBtn.title);
+}
+
 langBtn.addEventListener("click", () => {
   lang = lang === "th" ? "en" : "th";
-  langBtn.innerHTML = lang === "th" ? iconText("bi-translate", "EN") : iconText("bi-translate", "TH");
+  localStorage.setItem("appLang", lang);
+  document.documentElement.lang = lang;
+  renderLanguageToggle();
   updateLanguageUI();
   renderActionBarText();
+  renderFooter();
   renderThemeToggle(getSavedThemeMode(), getEffectiveTheme(getSavedThemeMode()));
+  renderLanguageToggle();
 });
 
 function updateLanguageUI() {
+  renderFooter();
   if(lang === "th") {
     document.getElementById("formTitle").textContent = "แบบสอบถาม";
     document.getElementById("formTitle1").textContent = "ความเปลี่ยนแปลงหลังรับฮอร์โมน";
@@ -374,7 +416,9 @@ function updateLanguageUI() {
 document.addEventListener("DOMContentLoaded", function() {
   updateLanguageUI();
   renderActionBarText();
+  renderFooter();
   renderThemeToggle(getSavedThemeMode(), getEffectiveTheme(getSavedThemeMode()));
+  renderLanguageToggle();
 });
 
 startBtn.addEventListener("click", () => {
@@ -401,7 +445,6 @@ startBtn.addEventListener("click", () => {
   if(!valid) return;
 
   document.getElementById("introForm").style.display = "none";
-  langBtn.style.display = "none";
   progressContainer.style.display = "block";
   nextBtn.style.display = "block";
   prevBtn.style.display = "none";
@@ -516,7 +559,7 @@ function showAlert(type, message) {
   if (!toastContainer) return;
 
   const toastEl = document.createElement("div");
-  const icon = type === "success" ? "bi-check2-circle" : "bi-exclamation-circle";
+  const icon = type === "success" ? "bi-check-circle-fill" : (type === "warning" ? "bi-exclamation-triangle-fill" : "bi-x-circle-fill");
   toastEl.className = `toast app-toast toast-${type || "info"}`;
   toastEl.setAttribute("role", "status");
   toastEl.setAttribute("aria-live", "polite");

@@ -1,13 +1,13 @@
 {
-  "name": "Hormone Questionnaire Interactive",
-  "short_name": "Hormone Form",
+  "name": "Hormone Assessment",
+  "short_name": "Hormone",
   "description": "แบบสอบถามความเปลี่ยนแปลงหลังรับฮอร์โมน",
-  "start_url": "./index.html",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#111827",
-  "theme_color": "#111827",
+  "theme_color": "#052e16",
   "icons": [
     { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
     { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
